@@ -1,4 +1,4 @@
-import { mergeStyleSets, List, Stack, Text } from "@fluentui/react";
+import { List, mergeStyleSets, Stack } from "@fluentui/react";
 import type { GetServerSideProps, NextPage } from "next";
 import Image from "next/image";
 import getSession from "../utils/session";
