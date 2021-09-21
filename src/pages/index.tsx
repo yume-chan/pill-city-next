@@ -110,6 +110,7 @@ const Home: NextPage<HomeProps> = ({ list }) => {
         <Stack horizontal tokens={{ childrenGap: 8 }}>
           {post.media_urls.map((url, index) => (
             <Stack.Item key={index} grow>
+              {/* eslint-disable-next-line @next/next/no-img-element */}
               <img className={styles.image} src={url} alt="" />
             </Stack.Item>
           ))}

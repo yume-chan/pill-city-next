@@ -1,6 +1,6 @@
-import * as React from 'react';
-import Document, { Head, Html, Main, NextScript } from 'next/document';
-import { Stylesheet, InjectionMode, resetIds } from '@fluentui/react';
+import * as React from "react";
+import Document, { Head, Html, Main, NextScript } from "next/document";
+import { Stylesheet, InjectionMode, resetIds } from "@fluentui/react";
 // Fluent UI React (Fabric) 7 or earlier
 // import { Stylesheet, InjectionMode, resetIds } from 'office-ui-fabric-react';
 
@@ -10,7 +10,7 @@ const stylesheet = Stylesheet.getInstance();
 // Set the config.
 stylesheet.setConfig({
   injectionMode: InjectionMode.none,
-  namespace: 'server'
+  namespace: "server",
 });
 
 // Now set up the document, and just reset the stylesheet.
@@ -19,7 +19,8 @@ export default class MyDocument extends Document {
     stylesheet.reset();
     resetIds();
 
-    const page = renderPage(App => props => <App {...props} />);
+    // eslint-disable-next-line react/display-name
+    const page = renderPage((App) => (props) => <App {...props} />);
 
     return { ...page, styleTags: stylesheet.getRules(true) };
   }
@@ -28,7 +29,10 @@ export default class MyDocument extends Document {
     return (
       <Html>
         <Head>
-          <style type="text/css" dangerouslySetInnerHTML={{ __html: this.props.styleTags }} />
+          <style
+            type="text/css"
+            dangerouslySetInnerHTML={{ __html: this.props.styleTags }}
+          />
         </Head>
         <body>
           <Main />
