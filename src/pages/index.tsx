@@ -1,5 +1,6 @@
 import { List, mergeStyleSets, Stack } from "@fluentui/react";
 import type { GetServerSideProps, NextPage } from "next";
+import Head from "next/head";
 import Image from "next/image";
 import getSession from "../utils/session";
 import useStableCallback from "../utils/useConstCallback";
@@ -121,6 +122,9 @@ const Home: NextPage<HomeProps> = ({ list }) => {
 
   return (
     <div className={styles.content}>
+      <Head>
+        <title>Pill City</title>
+      </Head>
       <List className={styles.list} items={list} onRenderCell={renderPost} />
     </div>
   );

@@ -5,6 +5,7 @@ import {
   Text,
   TextField,
 } from "@fluentui/react";
+import Head from "next/head";
 import { GetServerSideProps, NextPage } from "next";
 import { useRouter } from "next/router";
 import { useState } from "react";
@@ -100,6 +101,10 @@ const Login: NextPage = () => {
 
   return (
     <div className={styles.form}>
+      <Head>
+        <title>Login / Pill City</title>
+      </Head>
+
       <Text className={styles.title} block variant="xxLarge">
         Log Into Pill City
       </Text>
