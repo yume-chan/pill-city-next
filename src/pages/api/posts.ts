@@ -16,10 +16,12 @@ export default async function handler(
     return;
   }
 
-  const { fromId } = req.query;
+  const { from } = req.query;
 
   const query = new URLSearchParams();
-  query.set("form_id", fromId as string);
+  if (from) {
+    query.set("from_id", from as string);
+  }
 
   const response = await fetch(
     `https://api.pill.city/api/home?${query.toString()}`,

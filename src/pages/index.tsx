@@ -1,24 +1,23 @@
 import { List, mergeStyleSets, Stack } from "@fluentui/react";
+import TimeAgo from "javascript-time-ago";
+import en from "javascript-time-ago/locale/en";
 import type { GetServerSideProps, NextPage } from "next";
 import Head from "next/head";
 import Image from "next/image";
-import getSession from "../utils/session";
-import useStableCallback from "../utils/useConstCallback";
-import useSWR from "swr";
-import { Post } from "../utils/types";
-// @ts-expect-error
-import TimeAgo from "javascript-time-ago";
+import { useEffect, useLayoutEffect, useMemo, useRef } from "react";
 // @ts-expect-error
 import ReactTimeAgo from "react-time-ago";
-// @ts-expect-error
-import en from "javascript-time-ago/locale/en";
+import useSWRInfinite from "swr/infinite";
+import getSession from "../utils/session";
+import { Post } from "../utils/types";
+import useStableCallback from "../utils/useConstCallback";
 
 TimeAgo.addDefaultLocale(en);
 
 export interface HomeProps {}
 
-const fetcher = (...args: any[]) =>
-  fetch(...args)
+const fetcher = (input: RequestInfo, init?: RequestInit | undefined) =>
+  fetch(input, init)
     .then((res) => res.json())
     .then((response) => response.data);
 
@@ -41,6 +40,81 @@ export const getServerSideProps: GetServerSideProps<HomeProps> = async ({
     props: {},
   };
 };
+
+function virtualFlatten<T>(
+  array: T[][],
+  start = 0,
+  end?: number | undefined
+): T[] {
+  return new Proxy(array, {
+    get(target, prop, receiver) {
+      switch (prop) {
+        case "length":
+          if (end) {
+            return end - start;
+          }
+          return target.reduce((sum, list) => sum + list.length, 0) - start;
+        case "slice":
+          return (start: number, end?: number) =>
+            virtualFlatten(target, start, end);
+      }
+
+      if (typeof prop !== "string") {
+        return Reflect.get(target, prop, receiver);
+      }
+
+      let index = Number.parseInt(prop, 10);
+      if (Number.isNaN(index)) {
+        return Reflect.get(target, prop, receiver);
+      }
+
+      index += start;
+      for (const list of target) {
+        if (index < list.length) {
+          return list[index];
+        }
+        index -= list.length;
+      }
+
+      return undefined;
+    },
+    has(target, p) {
+      if (typeof p !== "string") {
+        return Reflect.has(target, p);
+      }
+
+      let index = Number.parseInt(p, 10);
+      if (Number.isNaN(index)) {
+        return Reflect.has(target, p);
+      }
+
+      for (const list of target) {
+        if (index < list.length) {
+          return true;
+        }
+        index -= list.length;
+      }
+
+      return false;
+    },
+  }) as unknown as T[];
+}
+
+function swrGetKey(index: number, previousPageData: Post[] | null) {
+  if (previousPageData) {
+    if (previousPageData.length === 0) {
+      return null;
+    } else {
+      return `/api/posts?from=${previousPageData.at(-1)!.id}`;
+    }
+  } else {
+    return "/api/posts";
+  }
+}
+
+function listGetKey(item: Post) {
+  return item.id;
+}
 
 const Home: NextPage<HomeProps> = ({}) => {
   const styles = mergeStyleSets({
@@ -70,7 +144,41 @@ const Home: NextPage<HomeProps> = ({}) => {
     },
   });
 
-  const { data: list } = useSWR<Post[]>("/api/posts", fetcher);
+  const { data, isValidating, size, setSize } = useSWRInfinite<Post[]>(
+    swrGetKey,
+    fetcher
+  );
+
+  const loading = useRef(false);
+  useEffect(() => {
+    if (!isValidating) {
+      loading.current = false;
+    }
+  }, [isValidating]);
+
+  const list = useMemo(() => data && virtualFlatten(data), [data]);
+
+  const handleScroll = useStableCallback(() => {
+    const scrollingElement = document.documentElement!;
+    if (
+      !loading.current &&
+      scrollingElement.scrollTop + scrollingElement.clientHeight >=
+        scrollingElement.scrollHeight - 5
+    ) {
+      loading.current = true;
+      setSize(size + 1);
+    }
+  });
+
+  useLayoutEffect(() => {
+    window!.addEventListener("scroll", handleScroll, {
+      passive: true,
+    });
+
+    return () => {
+      window.removeEventListener("scroll", handleScroll);
+    };
+  }, [handleScroll]);
 
   const renderPost = useStableCallback((post: Post | undefined) => {
     if (!post) {
@@ -118,7 +226,12 @@ const Home: NextPage<HomeProps> = ({}) => {
       <Head>
         <title>Pill City</title>
       </Head>
-      <List className={styles.list} items={list} onRenderCell={renderPost} />
+      <List
+        className={styles.list}
+        items={list}
+        getKey={listGetKey}
+        onRenderCell={renderPost}
+      />
     </div>
   );
 };
