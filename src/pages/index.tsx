@@ -4,30 +4,23 @@ import Head from "next/head";
 import Image from "next/image";
 import getSession from "../utils/session";
 import useStableCallback from "../utils/useConstCallback";
+import useSWR from "swr";
+import { Post } from "../utils/types";
+// @ts-expect-error
+import TimeAgo from "javascript-time-ago";
+// @ts-expect-error
+import ReactTimeAgo from "react-time-ago";
+// @ts-expect-error
+import en from "javascript-time-ago/locale/en";
 
-interface Author {
-  id: string;
-  avatar_url: string;
-  profile_pic: string;
-}
+TimeAgo.addDefaultLocale(en);
 
-interface Post {
-  author: Author;
-  circles: null[];
-  comments: null[];
-  content: string;
-  created_at_seconds: number;
-  id: string;
-  is_public: boolean;
-  media_urls: string[];
-  reactions: string[];
-  reshareable: boolean;
-  reshared_from: null;
-}
+export interface HomeProps {}
 
-export interface HomeProps {
-  list: Post[];
-}
+const fetcher = (...args: any[]) =>
+  fetch(...args)
+    .then((res) => res.json())
+    .then((response) => response.data);
 
 export const getServerSideProps: GetServerSideProps<HomeProps> = async ({
   req,
@@ -44,21 +37,12 @@ export const getServerSideProps: GetServerSideProps<HomeProps> = async ({
     };
   }
 
-  const response = await fetch("https://api.pill.city/api/home", {
-    headers: {
-      Authorization: `Bearer ${token}`,
-    },
-  });
-  const json = await response.json();
-
   return {
-    props: {
-      list: json,
-    },
+    props: {},
   };
 };
 
-const Home: NextPage<HomeProps> = ({ list }) => {
+const Home: NextPage<HomeProps> = ({}) => {
   const styles = mergeStyleSets({
     content: {
       margin: "0 auto",
@@ -86,6 +70,8 @@ const Home: NextPage<HomeProps> = ({ list }) => {
     },
   });
 
+  const { data: list } = useSWR<Post[]>("/api/posts", fetcher);
+
   const renderPost = useStableCallback((post: Post | undefined) => {
     if (!post) {
       return null;
@@ -105,6 +91,13 @@ const Home: NextPage<HomeProps> = ({ list }) => {
           </Stack.Item>
           <Stack.Item className={styles.authorName} grow>
             {post.author.id}
+          </Stack.Item>
+          <Stack.Item>
+            <ReactTimeAgo
+              date={post.created_at_seconds * 1000}
+              polyfill={false}
+              timeStyle="twitter-now"
+            />
           </Stack.Item>
         </Stack>
         {post.content}

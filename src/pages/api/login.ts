@@ -1,32 +1,30 @@
 import type { NextApiRequest, NextApiResponse } from "next";
 import getSession from "../../utils/session";
-
-interface CommonResponseData<T> {
-  code: number;
-  message: string;
-  data: T;
-}
+import { CommonApiResponse } from "../../utils/types";
 
 export default async function handler(
   req: NextApiRequest,
-  res: NextApiResponse<CommonResponseData<undefined>>
+  res: NextApiResponse<CommonApiResponse<undefined>>
 ) {
   const { userId, password } = req.body;
 
   const response = await fetch("https://api.pill.city/api/signIn", {
     method: "POST",
-    headers: { "Content-Type": "application/json" },
+    headers: {
+      "Content-Type": "application/json",
+    },
     body: JSON.stringify({
       id: userId,
       password,
     }),
   });
+
   const { message, access_token } = await response.json();
+
   if (message) {
     res.status(200).json({
       code: 1,
       message,
-      data: undefined,
     });
   } else {
     const session = await getSession(req, res);
@@ -35,7 +33,6 @@ export default async function handler(
     res.status(200).json({
       code: 0,
       message: "success",
-      data: undefined,
     });
   }
 }
