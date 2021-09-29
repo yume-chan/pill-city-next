@@ -116,6 +116,24 @@ function listGetKey(item: Post) {
   return item.id;
 }
 
+function NewPost() {
+  const styles = mergeStyleSets({
+    root: {
+      borderRadius: 4,
+      marginTop: 20,
+      padding: "12px 20px",
+      boxShadow: "0 0 4px rgba(0,0,0,0.5)",
+    },
+  });
+
+  return (
+    <Stack className={styles.root}>
+      <div>Test</div>
+      New Post
+    </Stack>
+  );
+}
+
 const Home: NextPage<HomeProps> = ({}) => {
   const styles = mergeStyleSets({
     content: {
@@ -226,6 +244,7 @@ const Home: NextPage<HomeProps> = ({}) => {
       <Head>
         <title>Pill City</title>
       </Head>
+      <NewPost />
       <List
         className={styles.list}
         items={list}
